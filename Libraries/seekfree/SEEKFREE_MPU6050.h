@@ -60,10 +60,17 @@
 
 extern int16 mpu_gyro_x,mpu_gyro_y,mpu_gyro_z;
 extern int16 mpu_acc_x,mpu_acc_y,mpu_acc_z;
+extern float real_acc_x,real_acc_y,real_acc_z;//chng:滤波后acc值
+extern float real_gyro_x,real_gyro_y,real_gyro_z;//chng:滤波后gyro
+extern float pitch;
 
-int16  InitMPU6050(void);													//初始化MPU6050
+int16  InitMPU6050(void);//初始化MPU6050
+void  MPU6050_Offset(void);//chng:校准温飘
 void  Get_Gyro(void);
 void  Get_AccData(void);
 int16 GetData(uint8 REG_Address);
+void KalmanFilter(float ACC_Angle);
+void Get_Attitude(void);
+void IMUupdate(float gx, float gy, float gz, float ax, float ay, float az);
 
 #endif

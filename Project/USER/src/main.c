@@ -17,9 +17,6 @@
  * @note		
  ********************************************************************************************************************/
 #include "headfile.h"
-#include "math.h"
-#define PI 3.1415926
-#define ONE_RAD 57.295780
 void right_go_backward(uint32 speed){
     ftm_pwm_duty(ftm0,ftm_ch3,speed); //D0
     ftm_pwm_duty(ftm0,ftm_ch0,0); //D1
@@ -85,9 +82,9 @@ void go(int32 speed){
     else go_backward(-speed);
 }
 
-#define MECHANICAL_BALANCE 5
-#define KP_balance 33
-#define KD_balance 0.05
+#define MECHANICAL_BALANCE 11
+#define KP_balance 0.3
+#define KD_balance 0
 int16 DUTY_MAX = 300;
 int16 get_balance_duty(int16 angle, int16 gyro){
     double err = angle - MECHANICAL_BALANCE;
@@ -136,18 +133,19 @@ int main(void)
     IIC_init();
     systick_delay_ms(50);
     while(InitMPU6050() != 0x00);
+    MPU6050_Offset();
     
     for(;;){
       Get_Gyro();
       Get_AccData();
-      if(mpu_acc_x>=1024)mpu_acc_x=1024;
-      if(mpu_acc_x<=-1024)mpu_acc_x=-1024;
-      angle = -asin(mpu_acc_x/1024.0)*ONE_RAD; //角度制，结果取整（降噪）
-      gyro = mpu_gyro_y+7; //不知道什么原因，静止时角速度读出来为-7.
+      Data_Filter();
+      Get_Attitude();
+      KalmanFilter(pitch);
+      angle = pitch*10; //.
+      gyro = real_gyro_y*10; //均保留一位小数，转为int16
       duty = get_balance_duty(angle,gyro);
-      //go(duty);
-      
-      systick_delay_ms(10);
+      go(duty);
+      //systick_delay_ms(10);
     }
 }
 
