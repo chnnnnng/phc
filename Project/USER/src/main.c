@@ -17,6 +17,7 @@
  * @note		
  ********************************************************************************************************************/
 #include "headfile.h"
+#include "math.h"
 void right_go_backward(uint32 speed){
     ftm_pwm_duty(ftm0,ftm_ch3,speed); //D0
     ftm_pwm_duty(ftm0,ftm_ch0,0); //D1
@@ -82,104 +83,184 @@ void go(int32 speed){
     else go_backward(-speed);
 }
 
-#define MECHANICAL_BALANCE 11
-#define KP_balance 0.3
-#define KD_balance 0
-int16 DUTY_MAX = 300;
-int16 get_balance_duty(int16 angle, int16 gyro){
+const double MECHANICAL_BALANCE = 1;
+const double KP_balance = 15.5;
+const double KD_balance = 2;
+const int16 DUTY_MAX = 300;
+const int16 DUTY_MIN = 40;
+const int16 DUTY_ING = 15;
+int16 get_balance_duty(double angle, double gyro){
     double err = angle - MECHANICAL_BALANCE;
-    if(err>=0) err = pow(err,1/2.0);
-    if(err<0) err = -pow(-err,1/2.0);
-    int16 duty = err*KP_balance + gyro * KD_balance;
+    //if(err>=0) err = pow(err,1/2.0);
+    //if(err<0) err = -pow(-err,1/2.0);
+    int16 duty = err*KP_balance + KD_balance*gyro;
+    if(duty <= -DUTY_MAX) duty = -DUTY_MAX;
+    if(duty > -DUTY_MAX && duty <= -DUTY_MIN) duty = duty;
+    if(duty > -DUTY_MIN && duty <= -DUTY_ING) duty = -DUTY_MIN;
+    if(duty > -DUTY_ING && duty <= DUTY_ING) duty = 0;
+    if(duty > DUTY_ING && duty <= DUTY_MIN) duty = DUTY_MIN;
+    if(duty > DUTY_MIN && duty <= DUTY_MAX) duty = duty;
     if(duty > DUTY_MAX)duty = DUTY_MAX;
-    if(duty < -DUTY_MAX)duty = -DUTY_MAX;
+    
     return duty;
 }
 
-int16 angle = 0;
-int16 gyro = 0;
-int16 duty = 0;
+char CLEAR_ENCODER_INTEGRAL_FLAG = 0;
+#define KP_velocity 5.0f
+float KI_velocity = KP_velocity/200.0f;
+const int16 ENCODER_INTEGRAL_MAX = 10000;
+int16 get_velocity_duty(int16 speed_left, int16 speed_right){
+  static float velocity, encoder_least, encoder, movement, encoder_integral;
+  encoder_least = (speed_left + speed_right) - 0;
+  encoder *= 0.7f;
+  encoder += encoder_least * 0.3f;
+  encoder_integral += encoder;
+  if(encoder_integral >= ENCODER_INTEGRAL_MAX) encoder_integral = ENCODER_INTEGRAL_MAX;
+  if(encoder_integral <= -ENCODER_INTEGRAL_MAX) encoder_integral = -ENCODER_INTEGRAL_MAX;
+  velocity = encoder * KP_velocity + encoder_integral * KI_velocity;
+  if(CLEAR_ENCODER_INTEGRAL_FLAG == 1){
+    CLEAR_ENCODER_INTEGRAL_FLAG = 0;
+    encoder_integral = 0;
+  }
+  return velocity;
+}
+
+double angle = 0;
+double gyro = 0;
+int16 duty = 0 , duty_balance = 0, duty_velocity = 0;
 int16 speed_left = 0;
 int16 speed_right = 0;
+char RUN_OR_STOP_FLAG = 0;
 
 void PIT0_IRQHandler(void);
 void PIT1_IRQHandler(void);
+void exception_detection(){
+  if(angle > MECHANICAL_BALANCE + 40 || angle < MECHANICAL_BALANCE - 40){
+    CLEAR_ENCODER_INTEGRAL_FLAG = 1;
+    RUN_OR_STOP_FLAG = 0;
+  }else{
+    RUN_OR_STOP_FLAG = 1;
+  }
+}
+void get_attitude(void){
+  Get_Gyro();
+  Get_AccData();
+  Data_Filter();
+  Get_Attitude();
+  KalmanFilter(pitch);
+  angle = pitch;
+  gyro = real_gyro_y;
+}
 
 int main(void)
 {
     get_clk();//上电后必须运行一次这个函数，获取各个频率信息，便于后面各个模块的参数设置
-    //此处编写用户代码(例如：外设初始化代码等)
     //uart_init(uart2,9600);
-    OLED_Init();
-    //OLED_P8x16Str(0,0,"Hello");
     
+    //OLED初始化
+    OLED_Init();
+    OLED_P6x8Str(0,0,"Starting...");
+    systick_delay_ms(250);
+    //FTM电机初始化
     ftm_pwm_init(ftm0,ftm_ch3,50,0); //D0
     ftm_pwm_init(ftm0,ftm_ch0,50,0); //D1
     ftm_pwm_init(ftm0,ftm_ch2,50,0); //D2
     ftm_pwm_init(ftm0,ftm_ch1,50,0); //D3
-    
+    //FTM正交解码初始化
     ftm_quad_init(ftm1);
     ftm_quad_init(ftm2);
-    
-    pit_init_ms(pit0,100);
-    set_irq_priority(PIT0_IRQn,1);//设置优先级,根据自己的需求设置
-    enable_irq(PIT0_IRQn);//打开pit0的中断开关
-    //EnableInterrupts;
+    OLED_P6x8Str(0,1,"FTM Init Done...");
+    systick_delay_ms(250);
+    //PIT中断开始
+    pit_init_ms(pit0,5);
+    set_irq_priority(PIT0_IRQn,1);//PIT0中断是MPU的中断
+    enable_irq(PIT0_IRQn);
     pit_init_ms(pit1,50);
-    set_irq_priority(PIT1_IRQn,2);
+    set_irq_priority(PIT1_IRQn,2);//PIT1中断是编码器的中断
     enable_irq(PIT1_IRQn);
     EnableInterrupts;
-    
+    OLED_P6x8Str(0,2,"PIT Init Done...");
+    systick_delay_ms(250);
+    //MPU6050初始化
     IIC_init();
     systick_delay_ms(50);
     while(InitMPU6050() != 0x00);
-    MPU6050_Offset();
-    
-    for(;;){
-      Get_Gyro();
-      Get_AccData();
-      Data_Filter();
-      Get_Attitude();
-      KalmanFilter(pitch);
-      angle = pitch*10; //.
-      gyro = real_gyro_y*10; //均保留一位小数，转为int16
-      duty = get_balance_duty(angle,gyro);
-      go(duty);
-      //systick_delay_ms(10);
+    OLED_P6x8Str(0,3,"MPU Init...");
+    systick_delay_ms(200);
+    OLED_P6x8Str(0,4,"PLZ KEEP STABLE");
+    systick_delay_ms(250);
+    MPU6050_Offset();//温漂校零，此时要求保持稳定，不要晃动！
+    OLED_P6x8Str(0,5,"MPU Init Done");
+    systick_delay_ms(200);
+    OLED_P6x8Str(0,6,"Ready");
+    systick_delay_ms(250);
+    OLED_P6x8Str(0,7,"STABLE & UPRIGHT");
+    //将小车直立稳定后 开始
+    for(int i=0;i<10;i++){
+      get_attitude();
+      systick_delay_ms(20);
+    }
+    while(1){
+      get_attitude();
+      if(angle<MECHANICAL_BALANCE+8&&angle>MECHANICAL_BALANCE-8&&gyro<2&&gyro>-2){
+        OLED_P6x8Str(0,8,"All Done");
+        systick_delay_ms(250);
+        RUN_OR_STOP_FLAG = 1;
+        break;
+      }
+      systick_delay_ms(100);
+    }
+    while(1){
+      exception_detection();
+      if(RUN_OR_STOP_FLAG==1){
+        OLED_Fill(0x00);
+        OLED_P6x8Str(38,0,"Dashboard");
+        OLED_P6x8Str(0,1,"ANGLE:");
+        OLED_P6x8Str(0,2,"GYRO :");
+        OLED_P6x8Str(0,3,"DUTY :");
+        OLED_P6x8Str(0,4,"SPD-L:");
+        OLED_P6x8Str(0,5,"SPD-R:");
+        OLED_Print_Num1(42,1,angle);
+        OLED_Print_Num1(42,2,gyro);
+        OLED_Print_Num1(42,3,duty);
+        OLED_Print_Num1(42,4,speed_left);
+        OLED_Print_Num1(42,5,speed_right);
+      }else{
+        OLED_Fill(0x00);
+        OLED_P6x8Str(43,0,"STOPPED");
+        OLED_P6x8Str(0,1,"ANGLE:");
+        OLED_P6x8Str(0,2,"GYRO :");
+        OLED_Print_Num1(42,1,angle);
+        OLED_Print_Num1(42,2,gyro);
+      }
+      systick_delay_ms(50);
     }
 }
 
-//int count = 0;
+
 void PIT0_IRQHandler(void){
       PIT_FlAG_CLR(pit0);
-//      int y = 31-angle;
-//      if(y>63)y=63;
-//      if(y<0)y=0;
-//      OLED_PutPixel(count++,y);
-//      if(count == 128){
-//        OLED_Fill(0x00);
-//        count = 0;
-//      }
-      OLED_Fill(0x00);
-      OLED_P6x8Str(42,0,"WDNMD");
-      OLED_P6x8Str(0,1,"ANGLE:");
-      OLED_P6x8Str(0,2,"GYRO :");
-      OLED_P6x8Str(0,3,"DUTY :");
-      OLED_P6x8Str(0,4,"SPD-L:");
-      OLED_P6x8Str(0,5,"SPD-R:");
-      OLED_Print_Num1(42,1,angle);
-      OLED_Print_Num1(42,2,gyro);
-      OLED_Print_Num1(42,3,duty);
-      OLED_Print_Num1(42,4,speed_left);
-      OLED_Print_Num1(42,5,speed_right);
+      
+      if(RUN_OR_STOP_FLAG==1){
+        get_attitude();
+        duty_balance = get_balance_duty(angle,gyro);
+        //duty_velocity = get_velocity_duty(speed_left,speed_right);
+        duty = duty_balance + duty_velocity;
+        //go(duty);
+      }else{
+        get_attitude();
+        go(0);
+      }
 }
 
 void PIT1_IRQHandler(void){
   PIT_FlAG_CLR(pit1);
-  speed_left = ftm_quad_get(ftm1);
-  ftm_quad_clean(ftm1);
-  speed_right = ftm_quad_get(ftm2);
-  ftm_quad_clean(ftm2);
+  if(RUN_OR_STOP_FLAG==1){
+    speed_right = ftm_quad_get(ftm1);
+    ftm_quad_clean(ftm1);
+    speed_left = ftm_quad_get(ftm2);
+    ftm_quad_clean(ftm2);
+  }
 }
 
 

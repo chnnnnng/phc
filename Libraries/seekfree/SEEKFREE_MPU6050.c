@@ -124,7 +124,7 @@ void Get_Gyro(void)
 #define AcceRatio 	16384.0f
 #define GyroRatio 	16.4f
 #define Gyro_Gr		0.0010653	// 角速度变成弧度	此参数对应陀螺2000度每秒
-#define ACC_FILTER_NUM 5		// 加速度计滤波深度
+#define ACC_FILTER_NUM 2		// 加速度计滤波深度
 #define GYRO_FILTER_NUM 1		// 陀螺仪滤波深度
 int32 ACC_X_BUF[ACC_FILTER_NUM], ACC_Y_BUF[ACC_FILTER_NUM], ACC_Z_BUF[ACC_FILTER_NUM];	// 滤波缓存数组
 int32 GYRO_X_BUF[GYRO_FILTER_NUM], GYRO_Y_BUF[GYRO_FILTER_NUM], GYRO_Z_BUF[GYRO_FILTER_NUM];
@@ -148,6 +148,7 @@ void Data_Filter(void)	// 数据滤波
 	ACC_Z_BUF[0] = mpu_acc_z;
 	GYRO_X_BUF[0] = mpu_gyro_x;
 	GYRO_Y_BUF[0] = mpu_gyro_y;
+        
 	GYRO_Z_BUF[0] = mpu_gyro_z;
 	
 	for(i=0;i<ACC_FILTER_NUM;i++)
@@ -189,7 +190,7 @@ void Data_Filter(void)	// 数据滤波
 //非矩阵卡尔曼滤波，这些参数不用改
 #define Peried 1/500.0f		//卡尔曼积分周期
 #define Q 2.0f				//过程噪声2.0		越小积分越慢，跟踪加速度计越慢越平滑
-#define R 5000.0f			//测量噪声5000.0	越小跟踪加速度计越快
+#define R 200.0f			//测量噪声5000.0	越小跟踪加速度计越快
 float KalmanGain = 1.0f;	//卡尔曼增益
 
 void KalmanFilter(float ACC_Angle)

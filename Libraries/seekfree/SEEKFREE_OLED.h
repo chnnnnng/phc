@@ -36,11 +36,11 @@
 
 
 //----宏定义OLED引脚----	 
-#define  OLED_SCL_PIN	A15
-#define  OLED_SDA_PIN	A16
-#define  OLED_RST_PIN	A14
-#define  OLED_DC_PIN	B16
-#define  OLED_CS_PIN	C17//A14
+#define  OLED_SCL_PIN	C19
+#define  OLED_SDA_PIN	C18
+#define  OLED_RST_PIN	C17
+#define  OLED_DC_PIN	C16
+#define  OLED_CS_PIN	A14
 
 
 void Dly_ms(uint16 ms);

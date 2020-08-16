@@ -34,8 +34,8 @@
 
 
 
-#define SEEKFREE_SCL    C16                           //定义SCL引脚
-#define SEEKFREE_SDA    C17                           //定义SDA引脚
+#define SEEKFREE_SCL    C11//C16                           //定义SCL引脚
+#define SEEKFREE_SDA    C12//C17                           //定义SDA引脚
 
 typedef enum IIC       //DAC模块
 {
