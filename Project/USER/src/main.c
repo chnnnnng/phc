@@ -87,6 +87,7 @@ void go_liner(int32 speed){
     else go_backward(-speed);
 }
 
+<<<<<<< HEAD
 void go(int32 speed_left, int32 speed_right){
     if(speed_left >= 0) left_go_forward(speed_left);
     else left_go_backward(-speed_left);
@@ -100,6 +101,14 @@ const double KP_balance = 32 * 0.7;//32;//27.9 * 0.6;
 const double KD_balance = 1.2 * 0.7;//2.2 * 0.6;
 const int16 DUTY_MAX = 400;
 int16 get_balance_duty(double angle, double gyro){
+=======
+
+#define MECHANICAL_BALANCE 11
+#define KP_balance 0.3
+#define KD_balance 0
+int16 DUTY_MAX = 300;
+int16 get_balance_duty(int16 angle, int16 gyro){
+>>>>>>> 585a8e5ed74e0275cf81e65f1546adeb5f21908b
     double err = angle - MECHANICAL_BALANCE;
     int16 duty = err*KP_balance + KD_balance*gyro;
     if(duty < -DUTY_MAX) duty = -DUTY_MAX;
