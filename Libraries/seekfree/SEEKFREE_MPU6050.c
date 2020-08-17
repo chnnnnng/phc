@@ -190,7 +190,7 @@ void Data_Filter(void)	// 数据滤波
 //非矩阵卡尔曼滤波，这些参数不用改
 #define Peried 1/500.0f		//卡尔曼积分周期
 #define Q 2.0f				//过程噪声2.0		越小积分越慢，跟踪加速度计越慢越平滑
-#define R 200.0f			//测量噪声5000.0	越小跟踪加速度计越快
+#define R 1.0f			//测量噪声5000.0	越小跟踪加速度计越快
 float KalmanGain = 1.0f;	//卡尔曼增益
 
 void KalmanFilter(float ACC_Angle)

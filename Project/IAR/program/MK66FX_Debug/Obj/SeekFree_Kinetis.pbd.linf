@@ -1,5 +1,9 @@
 ﻿C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\SeekFree_Kinetis.pbd
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\common.pbi
+C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\diskio.pbi
+C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\ff.pbi
+C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\isr.pbi
+C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\main.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\misc.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\MK60_adc.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\MK60_cmt.pbi
@@ -18,8 +22,6 @@ C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\MK60_spi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\MK60_systick.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\MK60_uart.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\MK60_wdog.pbi
-C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\diskio.pbi
-C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\ff.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\SEEKFREE_18TFT.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\SEEKFREE_7725.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\SEEKFREE_ABSOLUTE_ENCODER.pbi
@@ -37,5 +39,3 @@ C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\SEEKFREE
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\SEEKFREE_OLED.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\SEEKFREE_TSL1401.pbi
 C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\system_MK66.pbi
-C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\isr.pbi
-C:\Users\Administrator\Desktop\phc\Project\IAR\program\MK66FX_Debug\Obj\main.pbi
